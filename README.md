@@ -8,7 +8,6 @@
 ## Getting started <a name="gettingstarted"></a>
 
 - [Download and installation](docs/install.md)
-- [Data preprocessing](docs/preprocessing.md)
 - [Training the models](docs/training.md)
 - [Open-loop and Closed-loop Evaluation on Bench2Drive](docs/evaluation.md)
 

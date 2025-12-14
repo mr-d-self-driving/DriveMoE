@@ -5,13 +5,12 @@ hydra:
     dir: ${log_dir}
 _target_: src.agent.drivepi0.train.DrivePiZeroTrainAgent
 
-current_dir: YOUR_REPO_PATH  # You need to set path
 log_dir: ${oc.env:LOG_DIR}/train/${name}/${now:%Y-%m-%d}_${now:%H-%M}_${seed}
 name: drive-pi0
 device: cuda
 n_nodes: 1
 seed: 42
-pretrained_model_path:    # You need to set path
+pretrained_model_path: ${oc.env:VLM_PATH}
 load_pretrained_weights: True
 resume_checkpoint_path:
 train_vlm: True
@@ -26,16 +25,16 @@ lora_dropout: 0.0
 
 data:
   train:
-    statistics_path: ${current_dir}/statistics.json
+    statistics_path: ${oc.env:REPO_DIR}/config/statistics/b2d_statistics.json
     use_fixed_images: False
-    work_dir: ${current_dir}
+    work_dir: ${oc.env:EXPERIMENT_DIR}/b2d_action
     split: train
     num_of_action_experts: 13 # useless in drive-pi0
     shuffle_buffer_size: 200000
   val:
-    statistics_path: ${current_dir}/statistics.json
+    statistics_path: ${oc.env:REPO_DIR}/config/statistics/b2d_statistics.json
     use_fixed_images: False
-    work_dir: ${current_dir}
+    work_dir: ${oc.env:EXPERIMENT_DIR}/b2d_action
     split: val
     num_of_action_experts: 13 # useless in drive-pi0
     shuffle_buffer_size: 200000
@@ -46,7 +45,7 @@ wandb:
   run: ${now:%H-%M-%S}_${name}
 
 log_freq: 16
-n_epochs: 15
+n_epochs: 12
 n_updates: ${eval:'225348 // ${global_batch_size} * ${n_epochs}'}
 save_model_freq: ${eval:'225348 // ${global_batch_size} * 1'}
 eval_freq: 2000

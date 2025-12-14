@@ -5,7 +5,6 @@ hydra:
     dir: ${log_dir}
 _target_: src.agent.drivepi0.eval.DrivePiZeroEvalAgent
 
-# current_dir: "YOUR_CURRENT_WORK_DIR"  # You need to set path
 log_dir: ${oc.env:LOG_DIR}/eval/${name}/${now:%Y-%m-%d}_${now:%H-%M}_${seed}
 name: drive-pi0
 device: cuda
@@ -17,13 +16,13 @@ quantize: False
 lora: False
 lora_r: 32
 lora_dropout: 0.0
-pretrained_model_path: "YOUR_MODEL_PATH"  # You need to set path
+pretrained_model_path: ${oc.env:VLM_PATH}
 checkpoint_path: "YOUR_CHECKPOINT_PATH"  # You need to set path
 
 data:
-  statistics_path: ${current_dir}/statistics.json
+  statistics_path: ${oc.env:REPO_DIR}/config/statistics/b2d_statistics.json
   use_fixed_images: False
-  work_dir: ${current_dir}
+  work_dir: ${oc.env:EXPERIMENT_DIR}/b2d_action
   split: val
   num_of_action_experts: 13 # useless in drive-pi0
   shuffle_buffer_size: 200000
@@ -44,7 +43,7 @@ horizon_steps: 10
 action_dim: 2 # EEF_POS
 proprio_dim: 10  # POS_EULER
 state_dim: ${proprio_dim}
-max_seq_len: 788  # fixed 768 for image + max 20 for text
+max_seq_len: 532  # fixed 512 for image + max 20 for text
 tokenizer_padding: max_length # instead of truncating to longest
 max_image_text_tokens: ${max_seq_len}
 
@@ -92,7 +91,7 @@ vision:
     patch_size: 14
     layer_norm_eps: 1e-6
     attention_dropout: 0.0
-    num_image_tokens: 768 # 3 images: 256 * 3
+    num_image_tokens: 512 # 2 images: 256 * 2
     lora:
       r: ${lora_r}
       dropout: ${lora_dropout}

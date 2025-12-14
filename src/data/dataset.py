@@ -31,7 +31,24 @@ class TorchDataset(Dataset):
             normalize = Normalize.get_instance(self.statistics_path)
             state = normalize.prepare_state(all_data)
             data_dict['state'] = state
-            if not self.use_fixed_images:
+            
+            # drive-pi0
+            if 'cam_id' not in all_data.keys():
+                image_front_path = all_data['his_image_front'].numpy().decode('utf-8')
+                data_dict['image_front'] = image_normalization(image_front_path, (224, 224))
+                
+                # Extract current frame number from image path
+                current_step_str = all_data["his_image_front"].numpy().decode('utf-8').split("/")[-1].split(".")[0]
+                his_step = int(current_step_str) - 1  # Get previous frame index
+                his_step = max(his_step, 0)  # Ensure not negative
+                his_step_str = str(his_step).zfill(5)  # Format as 5-digit string
+            
+                # Generate path for previous frame image
+                cam_his = all_data["his_image_front"].numpy().decode('utf-8').replace(current_step_str, his_step_str)
+                
+                data_dict['image_front_time'] = image_normalization(cam_his, (224, 224))
+            
+            elif not self.use_fixed_images:
                 image_front_path = all_data['his_cam_front'].numpy().decode('utf-8')
                 data_dict['image_front'] = image_normalization(image_front_path, (224, 224))
                 image_back_path = all_data['his_cam_back'].numpy().decode('utf-8')
@@ -81,10 +98,10 @@ def prepare_b2d_dataset(
     else:
         data_path = os.path.join(work_dir, 'b2d_dynamic_camera')
         if split == 'train':
-            train_data_path = os.path.join(data_path, 'train')
+            train_data_path = os.path.join(work_dir, 'train')
             return TorchDataset(data_path=train_data_path, statistics_path=statistics_path, use_fixed_images=False, num_of_action_experts=num_of_action_experts)
         elif split == 'val':
-            val_data_path = os.path.join(data_path, 'val')
+            val_data_path = os.path.join(work_dir, 'val')
             return TorchDataset(data_path=val_data_path, statistics_path=statistics_path, use_fixed_images=False, num_of_action_experts=num_of_action_experts)
         else:
             raise ValueError(f"split type must be 'train' or 'val'")
