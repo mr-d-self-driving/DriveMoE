@@ -320,12 +320,8 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
         images_front_history = images_front_history.unsqueeze(0)
         images_front_history = einops.rearrange(images_front_history, "B H W C -> B C H W")
         images_front_history = images_front_history.unsqueeze(1)
-        images_back = self.image_preprocess(rgb_back)
-        images_back = images_back.unsqueeze(0)
-        images_back = einops.rearrange(images_back, "B H W C -> B C H W")  # remove cond_steps dimension
-        images_back = images_back.unsqueeze(1)
 
-        images = torch.cat((images_front, images_front_history, images_back), dim=1)
+        images = torch.cat((images_front, images_front_history), dim=1)
         model_inputs = self.processor(text=texts, images=images)
 
         # build causal mask and position ids for trajectory
