@@ -17,3 +17,4 @@ Then run the script to preprocess training data.
 ```bash
 bash script/generate_data.sh
 ```
+For OPEN-LOOP evaluation (testing with ground truth history), you must be set HORIZON_SIZE to 20 to ensure fair comparison with baseline methods. For CLOSED-LOOP evaluation (testing with predicted history), it can be set to any value based on your requirements.
