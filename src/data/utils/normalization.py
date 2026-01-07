@@ -34,10 +34,10 @@ class Normalize():
             self.target_far_x_99 = loaded_data['command_far_x'][1]
             self.target_far_y_01 = loaded_data['command_far_y'][0]
             self.target_far_y_99 = loaded_data['command_far_y'][1]
-            self.target_near_x_01 = loaded_data['command_near_x'][0]
-            self.target_near_x_99 = loaded_data['command_near_x'][1]
-            self.target_near_y_01 = loaded_data['command_near_y'][0]
-            self.target_near_y_99 = loaded_data['command_near_y'][1]
+            # self.target_near_x_01 = loaded_data['command_near_x'][0]
+            # self.target_near_x_99 = loaded_data['command_near_x'][1]
+            # self.target_near_y_01 = loaded_data['command_near_y'][0]
+            # self.target_near_y_99 = loaded_data['command_near_y'][1]
 
     def standard_normalize(self, true_np_array, percentile_01, percentile_99):
         return 2 * (true_np_array - percentile_01) / (percentile_99 - percentile_01) - 1

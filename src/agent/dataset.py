@@ -23,30 +23,10 @@ class Bench2DriveDataset:
 
 if __name__ == '__main__':
     from omegaconf import OmegaConf
-    fixed_camera_config = OmegaConf.load("config/test_dataloader/fixed_camera.yaml")
-    dynamic_camera_train_config = OmegaConf.load("config/test_dataloader/dynamic_camera_train.yaml")
-    dynamic_camera_eval_config = OmegaConf.load("config/test_dataloader/dynamic_camera_eval.yaml")
-    fixed_camera_dataset = Bench2DriveDataset(fixed_camera_config.data.train).dataset
-    dynamic_camera_train_dataset = Bench2DriveDataset(dynamic_camera_train_config.data.train).dataset
-    dynamic_camera_eval_dataset = Bench2DriveDataset(dynamic_camera_eval_config.data.val).dataset
-    
-    fixed_camera_dataloader = DataLoader(fixed_camera_dataset, batch_size=1, shuffle=False)
-    dynamic_camera_train_dataloader = DataLoader(dynamic_camera_train_dataset, batch_size=1, shuffle=False)
-    dynamic_camera_eval_dataloader = DataLoader(dynamic_camera_eval_dataset, batch_size=1, shuffle=False)
-    print('-----------------------fixed camera data-----------------------')
-    for batch in fixed_camera_dataloader:
-        print('state_shape: ', batch['state'].shape)
-        print('trajectory_shape: ', batch['trajectory'].shape)
-        print('cam_id: ', batch['cam_id'])
-        break
-    print('-----------------------dynamic camera data-----------------------')
-    print('train')
-    for batch in dynamic_camera_train_dataloader:
-        print('state_shape: ', batch['state'].shape)
-        print('trajectory_shape: ', batch['trajectory'].shape)
-        break
-    print('eval')
-    for batch in dynamic_camera_eval_dataloader:
+    base_config = OmegaConf.load("config/train/DrivePi0/base.yaml")
+    base_dataset = Bench2DriveDataset(base_config.data.train).dataset
+    test_dataloader = DataLoader(base_dataset, batch_size=1, shuffle=False, num_workers=0, pin_memory=False)
+    for batch in test_dataloader:
         print('state_shape: ', batch['state'].shape)
         print('trajectory_shape: ', batch['trajectory'].shape)
         break
