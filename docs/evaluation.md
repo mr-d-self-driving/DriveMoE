@@ -1,8 +1,8 @@
 ## Evaluation
 ### Open-loop evaluation
-For open-loop testing, configure the [config file](/config/eval/DrivePi0/base.yaml) (update paths, etc.), then run the script to get the accuracy.
+For open-loop testing, configure the [config file](/config/eval/DrivePi0/closed_loop.yaml) (update paths, etc.), then run the script to get the accuracy. It is worth noting that open-loop evaluation must predict the next 20 trajectory points, so you need to ensure that your model is trained with **horizon=20**.
 ```bash
-bash script/evaluation/eval_drivepi0.sh
+bash script/evaluation/open_loop_drivepi0.sh
 ```
 
 ### Closed-loop evaluation

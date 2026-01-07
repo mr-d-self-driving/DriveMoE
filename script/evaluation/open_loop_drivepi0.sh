@@ -13,5 +13,5 @@
 
 CUDA_VISIBLE_DEVICES=0 HYDRA_FULL_ERROR=1 torchrun \
     script/run.py \
-    --config-name=base \
+    --config-name=open_loop \
     --config-path=../config/eval/DrivePi0\
