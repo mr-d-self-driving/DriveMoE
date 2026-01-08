@@ -15,8 +15,6 @@ bash script/evaluation/open_loop_drivepi0.sh
 ## Closed-loop evaluation
 For closed-loop testing, configure the [config file](/config/eval/DrivePi0/closed_loop.yaml) (update paths, etc.). 
 
-Our trained DrivePi0 checkpoint file is available for download at [链接/路径].
-
 To properly set up the evaluation environment, please clone the [Bench2Drive](https://github.com/Thinklab-SJTU/Bench2Drive) repository at the same directory level as your DriveMoE repository
 ```console
 cd ..
