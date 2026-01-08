@@ -51,6 +51,7 @@ class DrivePiZeroEvalAgent:
             Bench2DriveDataset(cfg.data).dataset, 
             batch_size=cfg.device_batch_size,
             pin_memory=True,
+            shuffle=False,
             num_workers=cfg.num_workers
         )
         self.eval_thresholds = cfg.eval_thresholds
@@ -77,9 +78,6 @@ class DrivePiZeroEvalAgent:
         def preprocess_batch(batch, split_mask: bool, sample_fm_time: bool):
             images_front = batch["image_front"]
             images_front_history = batch["image_front_time"]
-            images_back = batch["image_back"]
-            
-            batch_size = images_front.shape[0]
             
             state = batch["state"]
             trajectory = batch["trajectory"].squeeze(1)  # remove the time dimension
@@ -88,10 +86,7 @@ class DrivePiZeroEvalAgent:
             images_front = images_front.unsqueeze(1)
             images_front_history = einops.rearrange(images_front_history, "B H W C -> B C H W")  # remove cond_steps dimension
             images_front_history = images_front_history.unsqueeze(1)
-            images_back = einops.rearrange(images_back, "B H W C -> B C H W")  # remove cond_steps dimension
-            images_back = images_back.unsqueeze(1)
             
-            # images = torch.cat((images_front, images_front_history, images_back), dim=1)
             images = torch.cat((images_front, images_front_history), dim=1)
             model_inputs = self.processor(text=texts, images=images)
 

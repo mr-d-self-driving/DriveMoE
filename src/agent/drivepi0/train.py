@@ -139,6 +139,7 @@ class DrivePiZeroTrainAgent:
             Bench2DriveDataset(cfg.data.train).dataset,
             batch_size=cfg.per_device_batch_size,
             pin_memory=True,
+            shuffle=True,
             num_workers=cfg.num_workers
         )
 
@@ -149,6 +150,7 @@ class DrivePiZeroTrainAgent:
                     Bench2DriveDataset(cfg.data.train).dataset,
                     batch_size=cfg.per_device_batch_size,
                     pin_memory=True,
+                    shuffle=False,
                     num_workers=cfg.num_workers
                 )
             )
