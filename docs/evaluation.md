@@ -13,7 +13,15 @@ bash script/evaluation/open_loop_drivepi0.sh
 ```
 
 ## Closed-loop evaluation
-For closed-loop testing, configure the [config file](/config/eval/DrivePi0/closed_loop.yaml) (update paths, etc.). 
+For closed-loop testing, configure the [config file](/config/eval/DrivePi0/closed_loop.yaml) (update paths, etc.). You can download our DrivePi0 checkpoint [here](https://huggingface.co/rethinklab/DrivePi0).
+
+The following are our evaluation results on 8*H200 GPUs.
+
+| Model | DS | SR |
+|:-------:|:-------:|:-------:|
+| [DrivePi0-Base-float16](/docs/drivepi_base_float16.json) | 55.85 | 30.00 |
+| [DrivePi0-Base-float32](/docs/drivepi_base_float32.json) | 65.85 | 42.27 |
+| [DrivePi0-Full-float32](/docs/drivepi_full_float32.json) | 67.41 | 44.09 |
 
 To properly set up the evaluation environment, please clone the [Bench2Drive](https://github.com/Thinklab-SJTU/Bench2Drive) repository at the same directory level as your DriveMoE repository
 ```console
