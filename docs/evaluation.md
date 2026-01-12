@@ -17,11 +17,11 @@ For closed-loop testing, configure the [config file](/config/eval/DrivePi0/close
 
 The following are our evaluation results on 8*H200 GPUs.
 
-| Model | DS | SR |
-|:-------:|:-------:|:-------:|
-| [DrivePi0-Base-float16](/docs/drivepi_base_float16.json) | 55.85 | 30.00 |
-| [DrivePi0-Base-float32](/docs/drivepi_base_float32.json) | 65.85 | 42.27 |
-| [DrivePi0-Full-float32](/docs/drivepi_full_float32.json) | 67.41 | 44.09 |
+| Model | DS | SR | Json |
+|:-------:|:-------:|:-------:|:-------:|
+| [DrivePi0-Base-bf16](https://huggingface.co/rethinklab/DriveMoE/blob/main/DrivePi0_Base_bf16.pt) | 55.85 | 30.00 | [DrivePi0-Base-bf16](/docs/drivepi_base_bf16.json) 
+| [DrivePi0-Base-fp32](https://huggingface.co/rethinklab/DriveMoE/blob/main/DrivePi0_Base_fp32.pt) | 65.85 | 42.27 |[DrivePi0-Base-fp32](/docs/drivepi_base_fp32.json)
+| [DrivePi0-Full-fp32](https://huggingface.co/rethinklab/DriveMoE/blob/main/DrivePi0_Full_fp32.pt) | 67.41 | 44.09 |[DrivePi0-Full-fp32](/docs/drivepi_full_fp32.json)
 
 To properly set up the evaluation environment, please clone the [Bench2Drive](https://github.com/Thinklab-SJTU/Bench2Drive) repository at the same directory level as your DriveMoE repository
 ```console
