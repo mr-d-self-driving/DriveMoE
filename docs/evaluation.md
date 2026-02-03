@@ -13,7 +13,7 @@ bash script/evaluation/open_loop_drivepi0.sh
 ```
 
 ## Closed-loop evaluation
-For closed-loop testing, configure the [config file](/config/eval/DrivePi0/closed_loop.yaml) (update paths, etc.). You can download our DrivePi0 checkpoint [here](https://huggingface.co/rethinklab/DrivePi0).
+For closed-loop testing, configure the [config file](/config/eval/DrivePi0/closed_loop.yaml) (update paths, etc.). You can download our DrivePi0 checkpoint [here](https://huggingface.co/rethinklab/DriveMoE).
 
 The following are our evaluation results on 8*H200 GPUs.
 
