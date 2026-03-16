@@ -22,10 +22,10 @@ This project has been developed based on the following pioneering works on GitHu
 ## Citation <a name="citation"></a>
 
 ```bibtex
-      @article{yang2025drivemoe,
+@article{yang2025drivemoe,
       title={DriveMoE: Mixture-of-experts for vision-language-action model in end-to-end autonomous driving},
       author={Yang, Zhenjie and Chai, Yilin and Jia, Xiaosong and Li, Qifeng and Shao, Yuqian and Zhu, Xuekai and Su, Haisheng and Yan, Junchi},
       journal={arXiv preprint arXiv:2505.16278},
       year={2025}
-      }
+}
 ```
