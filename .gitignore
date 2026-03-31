@@ -1,23 +1,22 @@
 # dataset
-/b2d_dynamic_camera
-/b2d_fixed_camera
-/camera_labels
-/log
-/exp
-/Bench2Drive-Base
+/data/Bench2Drive-Base
+/data/camera_labels
+/data/scenario_labels
 
 # model
-/paligemma-3b-pt-224
-/pretrained_paligemma
-/DriveMoE.pt
-/DrivePiZero.pt
-/cam_embedding_weight.pt
+/ckpts/paligemma-3b-pt-224
+
+# log dir
+/log
+
+# experiment dir
+/exp
+
+# visualize data
+/visualize/*
 
 # wandb
 /wandb
-
-# code
-/tools
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

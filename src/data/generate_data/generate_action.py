@@ -11,23 +11,15 @@ from load_utils import load_json_gz
 os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"
 
 @ray.remote
-def get_data_info(route_path: str):
-    """
-    Extract and organize driving episode data from a given route directory.
-    
-    Args:
-        route_path: Path to the route directory containing data files
-        
-    Returns:
-        Tuple containing lists of various driving episode data:
-        - Position, orientation, speed, commands
-        - Image paths from multiple cameras
-        - Acceleration and angular velocity data
-    """
+def get_data_info(route_path: str, camera_label_dir: str, scenario_label_dir: str):
     # Extract basic information from route path
     route_name = os.path.basename(route_path)
     scenario_id, town_id, route_id, weather_id = route_name.split('_')[:4]
     anno_dir = os.path.join(route_path, "anno")
+    
+    camera_label_file_name = str(route_name) + ".json"
+    camera_label_path = os.path.join(camera_label_dir, camera_label_file_name)
+    scenario_label_path = os.path.join(scenario_label_dir, camera_label_file_name)
     
     # Get total number of steps from annotation directory
     step_sum = len(os.listdir(anno_dir))
@@ -35,6 +27,29 @@ def get_data_info(route_path: str):
     # Load all annotation files at once using list comprehension
     anno_list = [load_json_gz(os.path.join(anno_dir, f"{str(step).zfill(5)}.json.gz")) 
                 for step in range(step_sum)]
+    
+    cam_id_list = []
+    scenario_id_list = []
+    try:
+        with open(camera_label_path, 'r') as f:
+            cam_data = json.load(f)
+            if(len(cam_data) != step_sum):
+                raise Exception(f'cam id num in {route_name} is wrong!')
+            for step in range(step_sum):
+                cam_id_list.append(cam_data[f"{step}"])            
+    except FileNotFoundError:
+        print(f"file {camera_label_path} does not exist, skip it")
+        return None
+    try:
+        with open(scenario_label_path, 'r') as f:
+            scenario_data = json.load(f)
+            if(len(scenario_data) != step_sum):
+                raise Exception(f'scenario id num in {route_name} is wrong!')
+            for step in range(step_sum):
+                scenario_id_list.append(scenario_data[f"{step}"])            
+    except FileNotFoundError:
+        print(f"file {scenario_label_path} does not exist, skip it")
+        return None
     
     # Generate paths for all camera images (6 cameras)
     camera_dirs = {
@@ -81,20 +96,15 @@ def get_data_info(route_path: str):
         camera_paths['back'][:-1],        # Back camera images
         camera_paths['back_left'][:-1],   # Back-left camera images
         camera_paths['back_right'][:-1],  # Back-right camera images
+        cam_id_list[:-1],                 # Camera ids
+        scenario_id_list[:-1],            # Scenario ids
         scenario_id,
         town_id,
         route_id,
         weather_id
     )
 
-def deal_with_data(data_path: str, work_dir: str):
-    """
-    Process driving data in parallel using Ray and save to train/val splits.
-    
-    Args:
-        data_path: Path to directory containing route folders
-        work_dir: Output directory for processed data
-    """
+def deal_with_data(data_path: str, work_dir: str, camera_label_dir: str, scenario_label_dir: str):
     # Initialize Ray if not already initialized
     if not ray.is_initialized():
         ray.init(num_cpus=min(32, os.cpu_count()), num_gpus=0)  # Use up to 32 CPUs
@@ -111,7 +121,7 @@ def deal_with_data(data_path: str, work_dir: str):
         for route_dir in route_dirs:
             route_name = os.path.basename(route_dir)
             # Submit task to Ray cluster with proper tagging
-            future = get_data_info.remote(route_dir)
+            future = get_data_info.remote(route_dir, camera_label_dir, scenario_label_dir)
             futures.append((future, 'val' if route_name in VAL_LIST else 'train'))
         
         # Process results as they complete
@@ -160,7 +170,9 @@ def deal_with_data(data_path: str, work_dir: str):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_path", type=str, required=True)
-    parser.add_argument("--work_dir", type=str, required=True)
+    parser.add_argument("--b2d_dataset_dir", type=str, default="data/Bench2Drive-Base")
+    parser.add_argument("--camera_label_dir", type=str, default="data/camera_labels")
+    parser.add_argument("--scenario_label_dir", type=str, default="data/scenario_labels")
+    parser.add_argument("--work_dir", type=str, default="exp")
     args = parser.parse_args()
-    deal_with_data(data_path=args.dataset_path, work_dir=args.work_dir)
+    deal_with_data(data_path=args.b2d_dataset_dir, work_dir=args.work_dir, camera_label_dir=args.camera_label_dir, scenario_label_dir=args.scenario_label_dir)

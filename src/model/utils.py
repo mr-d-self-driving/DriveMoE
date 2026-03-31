@@ -1,6 +1,5 @@
 import torch
 
-
 def rotate_half(x):
     # Build the [-x2, x1, -x4, x3, ...] tensor for the sin part of the positional encoding.
     x1 = x[..., : x.shape[-1] // 2]  # Takes the first half of the last dimension
@@ -29,3 +28,13 @@ def repeat_kv(hidden_states: torch.Tensor, n_rep: int) -> torch.Tensor:
         slen,
         head_dim,
     )
+
+class ScaleGradient(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x, scale):
+        ctx.scale = scale
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output * ctx.scale, None

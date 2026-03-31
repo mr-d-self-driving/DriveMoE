@@ -1,35 +1,31 @@
 import os
+import cv2
 import json
+import math
+import time
+import carla
+import torch
+import einops
 import datetime
 import pathlib
-import time
-import cv2
-import einops
-import carla
-from collections import deque
-import math
-from collections import OrderedDict
-from omegaconf import OmegaConf
-
-import torch
-import tensorflow as tf
-import carla
 import numpy as np
+import tensorflow as tf
 from PIL import Image
-from torchvision import transforms as T
+from collections import deque
+from omegaconf import OmegaConf
+from scipy.optimize import fsolve
 from transformers import AutoTokenizer
-
-from leaderboard.autoagents import autonomous_agent
-
-from src.model.DrivePi0.drivepi0 import DrivePiZeroInference
-from src.model.DrivePi0.processing import VLAProcessor
-from src.data.utils.image import read_resize_encode_image_pytorch
-from src.data.utils.normalization import Normalize
-from src.data.utils.augmentations import augment_image
-from src.utils.pid import PID, PIDController
+from torchvision import transforms as T
 
 from team_code.planner import RoutePlanner
-from scipy.optimize import fsolve
+from leaderboard.autoagents import autonomous_agent
+
+from src.utils.pid import PIDController
+from src.data.utils.normalization import Normalize
+from src.model.DrivePi0.processing import VLAProcessor
+from src.model.DrivePi0.drivepi0 import DrivePiZeroInference
+from src.data.utils.augmentations import augment_image
+
 
 SAVE_PATH = os.environ.get('SAVE_PATH', None)
 IS_BENCH2DRIVE = os.environ.get('IS_BENCH2DRIVE', None)
@@ -76,8 +72,6 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
         self.model.freeze_all_weights()
         self.model.to(self.dtype)
         self.model.to(self.device)
-        if self.config.get("use_torch_compile", True):
-            self.model = torch.compile( self.model, mode="default",)
         self.model.eval()
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.config.pretrained_model_path, padding_side="right"
@@ -130,7 +124,6 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
             print(e, flush=True)
             self.lat_ref, self.lon_ref = 0, 0
         print(self.lat_ref, self.lon_ref, self.save_name)
-        #
         self._route_planner = RoutePlanner(4.0, 50.0, lat_ref=self.lat_ref, lon_ref=self.lon_ref)
         self._route_planner.set_route(self._global_plan, True)
         self._waypoint_planner = RoutePlanner(7.5, 25.0, lat_ref=self.lat_ref, lon_ref=self.lon_ref) # far
@@ -221,7 +214,7 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
             'angular_velocity': angular_velocity
 			}
         pos = self.gps_to_location(result['gps'])
-        far_node, far_command = self._waypoint_planner.run_step(pos[:2])
+        far_node, _ = self._waypoint_planner.run_step(pos[:2])
         result['x'] = pos[0]
         result['y'] = pos[1]
         result['z'] = pos[2]
@@ -256,17 +249,14 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
         ego_z = self.data_queue[-1]['z']
         ego_theta = self.data_queue[-1]['theta']
         speed = self.data_queue[-1]['speed']
-        acceleration = self.data_queue[-1]['acceleration']
-        angular_velocity = self.data_queue[-1]['angular_velocity']
 
-        his_x = []
-        his_y = []
         his_theta = []
         his_speed = []
         his_acceleration = []
         his_angular_velocity = []
         command_x = []
         command_y = []
+        
         for index in range(len(self.data_queue)):
             if index % 2 == 0:
                 continue
@@ -274,24 +264,14 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
                 [np.cos(ego_theta), np.sin(ego_theta)],
                 [-np.sin(ego_theta),  np.cos(ego_theta)]
             ])
-            local_command_point = np.array([self.data_queue[index]['x']-ego_x, self.data_queue[index]['y']-ego_y])
-            local_command_point = R.dot(local_command_point) # left hand
-
             command_x_y = np.array([self.data_queue[index]['command_x']-ego_x, self.data_queue[index]['command_y']-ego_y])
             command_x_y = R.dot(command_x_y)
             command_x.append(command_x_y[0])
             command_y.append(command_x_y[1])
-            his_x.append(local_command_point[0])
-            his_y.append(local_command_point[1])
             his_theta.append(self.data_queue[index]['theta']-ego_theta)
             his_speed.append(self.data_queue[index]['speed'])
             his_acceleration.append(self.data_queue[index]['acceleration'])
             his_angular_velocity.append(self.data_queue[index]['angular_velocity'])
-        
-        R = np.array([
-			    [np.cos(ego_theta), np.sin(ego_theta)],
-			    [-np.sin(ego_theta),  np.cos(ego_theta)]
-			])
             
         all_data = {}
         all_data['his_speed'] = np.array(his_speed, dtype=np.float32)
@@ -300,7 +280,6 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
         all_data['his_theta'] = np.array(his_theta, dtype=np.float32)
         all_data['x_command_far'] = np.array(command_x, dtype=np.float32)
         all_data['y_command_far'] = np.array(command_y, dtype=np.float32)
-        data_dict = {}
 
         # change to tensor
         state_normalize = Normalize.get_instance(self.config.data.statistics_path)
@@ -310,16 +289,11 @@ class DrivePiZeroAgent(autonomous_agent.AutonomousAgent):
         # prepare image
         rgb_front = self.data_queue[-1]['rgb_front']
         rgb_front_history = self.data_queue[-3]['rgb_front']
-        rgb_back = self.data_queue[-1]['rgb_back']
 
-        images_front = self.image_preprocess(rgb_front)
-        images_front = images_front.unsqueeze(0)
-        images_front = einops.rearrange(images_front, "B H W C -> B C H W")  # remove cond_steps dimension
-        images_front = images_front.unsqueeze(1)
-        images_front_history = self.image_preprocess(rgb_front_history)
-        images_front_history = images_front_history.unsqueeze(0)
-        images_front_history = einops.rearrange(images_front_history, "B H W C -> B C H W")
-        images_front_history = images_front_history.unsqueeze(1)
+        images_front = self.image_preprocess(rgb_front).unsqueeze(0)
+        images_front = einops.rearrange(images_front, "B H W C -> B C H W").unsqueeze(1)
+        images_front_history = self.image_preprocess(rgb_front_history).unsqueeze(0)
+        images_front_history = einops.rearrange(images_front_history, "B H W C -> B C H W").unsqueeze(1)
 
         images = torch.cat((images_front, images_front_history), dim=1)
         model_inputs = self.processor(text=texts, images=images)

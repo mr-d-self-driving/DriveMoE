@@ -1,8 +1,6 @@
-import functools
 import time
-
 import torch
-
+import functools
 
 def log_allocated_gpu_memory(log=None, stage="loading model", device=0):
     if torch.cuda.is_available():

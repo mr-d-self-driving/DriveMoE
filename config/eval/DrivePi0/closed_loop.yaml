@@ -1,49 +1,30 @@
 defaults:
   - _self_
-hydra:
-  run:
-    dir: ${log_dir}
-_target_: src.agent.drivepi0.eval.DrivePiZeroEvalAgent
-
-log_dir: ${oc.env:LOG_DIR}/eval/${name}/${now:%Y-%m-%d}_${now:%H-%M}_${seed}
-name: drive-pi0
 device: cuda
 gpu_id: 0
-n_nodes: 1
 seed: 42
-action_expert_adaptive_mode:  # adaLN, adaLN-Zero, or None
+action_expert_adaptive_mode:
 quantize: False
 lora: False
 lora_r: 32
 lora_dropout: 0.0
-pretrained_model_path: ${oc.env:VLM_PATH}
+pretrained_model_path: ${oc.env:DRIVEMOE_REPO_DIR}/ckpts/paligemma-3b-pt-224
 checkpoint_path: "YOUR_CHECKPOINT_PATH"  # You need to set path
 
 data:
   statistics_path: ${oc.env:REPO_DIR}/config/statistics/b2d_statistics.json
-  use_fixed_images: False
-  work_dir: ${oc.env:EXPERIMENT_DIR}/b2d_action
-  split: val
-  num_of_action_experts: 13 # useless in drive-pi0
-  shuffle_buffer_size: 200000
 
-
-eval_thresholds: [0.05, 0.1, 0.2, 0.3, 0.5]
-device_batch_size: 32
-
-num_workers: 6
 flow_sampling: beta
 num_inference_steps: 10
-final_action_clip_value: 1.0  # data normalized in [-1,1]
+final_action_clip_value: 1.0
 debug: False
 save_images: False
 
 cond_steps: 5
 horizon_steps: 10
-action_dim: 2 # EEF_POS
-proprio_dim: 10  # POS_EULER
-state_dim: ${proprio_dim}
-max_seq_len: 532  # fixed 512 for image + max 20 for text
+action_dim: 2
+proprio_dim: 10
+max_seq_len: 532
 tokenizer_padding: max_length # instead of truncating to longest
 max_image_text_tokens: ${max_seq_len}
 

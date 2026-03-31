@@ -1,10 +1,8 @@
-from typing import Optional, Tuple
-
 import torch
 import torch.nn as nn
+from typing import Optional, Tuple
 
 from src.model.lora import get_layer
-
 
 class PaliGemmaMultiModalProjector(nn.Module):
     def __init__(

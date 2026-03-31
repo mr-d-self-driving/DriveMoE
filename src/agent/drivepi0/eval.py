@@ -1,21 +1,16 @@
-import logging
-import os
-
-import hydra
-import einops
-import imageio
-from tqdm import *
-import numpy as np
 import torch
-from torch.utils.data import DataLoader
+import einops
+import logging
+from tqdm import tqdm
 from transformers import AutoTokenizer
+from torch.utils.data import DataLoader
 
-from src.model.DrivePi0.drivepi0 import DrivePiZeroInference
 from src.agent.dataset import Bench2DriveDataset
-from src.model.DrivePi0.processing import VLAProcessor
 from src.utils.metric import get_action_accuracy
-from src.utils.monitor import Timer, log_allocated_gpu_memory, log_execution_time
 from src.data.utils.normalization import Normalize
+from src.model.DrivePi0.processing import VLAProcessor
+from src.model.DrivePi0.drivepi0 import DrivePiZeroInference
+from src.utils.monitor import log_allocated_gpu_memory, log_execution_time
 
 log = logging.getLogger(__name__)
 
@@ -32,16 +27,6 @@ class DrivePiZeroEvalAgent:
         self.model.freeze_all_weights()
         self.model.to(self.dtype)
         self.model.to(self.device)
-        if cfg.get(
-            "use_torch_compile", True
-        ):  # model being compiled in the first batch which takes some time
-            self.model = torch.compile(
-                self.model,
-                mode="default",  # "reduce-overhead", max-autotune(-no-cudagraphs)
-                # backend="inductor", # default: inductor; cudagraphs
-            )
-        # modes: https://pytorch.org/docs/main/generated/torch.compile.html
-        # backends: https://pytorch.org/docs/stable/torch.compiler.html
         self.model.eval()
         log.info(f"Using cuda device: {self.device} dtype: {self.dtype}")
         log_allocated_gpu_memory(log, "loading model")
@@ -130,7 +115,7 @@ class DrivePiZeroEvalAgent:
             gt_trajectory = inputs.pop("actions")
             preds = self.model.infer_action(**inputs)
             eval_accuracy += get_action_accuracy(gt_trajectory, preds, self.eval_thresholds)
-            normalize = Normalize.get_instance('statistics.json')
+            normalize = Normalize.get_instance('config/statistics/b2d_statistics.json')
             pred_trajectory = []
             label_trajectory = []
             for pred in preds:

@@ -1,6 +1,6 @@
-import numpy as np
-import torch
 import json
+import torch
+import numpy as np
 
 class Normalize():
     _instance = None
@@ -61,6 +61,11 @@ class Normalize():
                     target_far_y[:, np.newaxis],
                 ), axis=1))
         return state
+    
+    def prepare_nav_points(self, all_data):
+        target_far_x = self.standard_normalize(all_data['x_command_far'], self.target_far_x_01, self.target_far_x_99)[-1]
+        target_far_y = self.standard_normalize(all_data['y_command_far'], self.target_far_y_01, self.target_far_y_99)[-1]
+        return torch.tensor([target_far_x, target_far_y])
 
     def prepare_traj(self, all_data):
         fur_x = self.standard_normalize(all_data['fur_x'], self.fur_x_01, self.fur_x_99)

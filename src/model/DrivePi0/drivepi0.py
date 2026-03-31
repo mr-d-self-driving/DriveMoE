@@ -6,13 +6,11 @@ Generates causal masking for the mixtures
 Potentially customized to add/remove mixtures, e.g., remove proprio or add another vision module
 
 """
-
-import logging
-from typing import Optional, Tuple
-
 import hydra
 import torch
+import logging
 from torch import nn
+from typing import Optional, Tuple
 
 from src.model.kv_cache import KVCache
 from src.model.DrivePi0.modules import (
@@ -23,7 +21,6 @@ from src.utils.decorator import NoSyncBase
 from src.utils.monitor import log_execution_time
 
 log = logging.getLogger(__name__)
-
 
 class DrivePiZero(nn.Module, NoSyncBase):
     @log_execution_time()
@@ -733,7 +730,7 @@ if __name__ == "__main__":
         "Please predict future trajectory ",
         "The future trajectory is ",
     ][:bsz]
-    dummy_proprio = torch.rand(bsz, config.cond_steps, config.state_dim)
+    dummy_proprio = torch.rand(bsz, config.cond_steps, config.proprio_dim)
 
     # tokenizer
     tokenizer = AutoTokenizer.from_pretrained(

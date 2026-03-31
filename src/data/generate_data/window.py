@@ -1,12 +1,11 @@
 import os
+import ray
+import uuid
 import pickle
+import argparse
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
-import argparse
-import ray
-import uuid
-from functools import partial
 
 os.environ["RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO"] = "0"
 
@@ -78,7 +77,7 @@ class Bench2DriveGenerator:
             'x_pure', 'y_pure', 'theta', 'speed', 'x_command_far', 'y_command_far',
             'acceleration', 'angular_velocity', 'image_front', 'image_front_left',
             'image_front_right', 'image_back', 'image_back_left', 'image_back_right',
-            'scenario_id', 'town_id', 'route_id', 'weather_id'
+            'camera_id', 'scenario_label', 'scenario_id', 'town_id', 'route_id', 'weather_id'
         ]
         episode = dict(zip(components, episode_data))
 
@@ -197,6 +196,12 @@ class Bench2DriveGenerator:
             
             # Camera data
             **{k: sample[k][-1] for k in sample if k.startswith('his_image_')},
+            
+            # Camera id
+            **{k: sample[k][-1] for k in sample if k.startswith('his_camera_id')},
+            
+            # Scenario id
+            **{k: sample[k][-1] for k in sample if k.startswith('his_scenario_label')},
             
             # Metadata
             'episode_id': sample['episode_idx'],

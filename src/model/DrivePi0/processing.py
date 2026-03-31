@@ -1,6 +1,5 @@
-from typing import List
-
 import torch
+from typing import List
 
 IMAGENET_STANDARD_MEAN = torch.tensor([0.5, 0.5, 0.5])
 IMAGENET_STANDARD_STD = torch.tensor([0.5, 0.5, 0.5])

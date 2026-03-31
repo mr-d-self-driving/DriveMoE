@@ -1,11 +1,20 @@
 import torch
-import torch.nn.functional as F
-from PIL import Image
-import torchvision.transforms as transforms
 import numpy as np
-from typing import Tuple
 import tensorflow as tf
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+from typing import Tuple
+from PIL import Image, ImageDraw
+
 from src.data.utils.augmentations import augment_image
+
+CAM_VISUALIZE_MAP = {
+    0: 0,
+    1: 2,
+    2: 4,
+    3: 3,
+    4: 5
+}
 
 def process_image(image: torch.Tensor) -> torch.Tensor:
     """Process the image by rounding, clipping, and casting to uint8."""
@@ -47,18 +56,6 @@ def read_resize_encode_image_pytorch(path: str, size: Tuple[int, int]) -> bytes:
 
     return image
 
-def concatenate_images(left_image: str, middle_image: str, right_image: str):
-    middle_img = Image.open(path).convert("RGB")
-    left_img = Image.open(path).convert("RGB")
-    right_img = Image.open(path).convert("RGB")
-
-    middle_img = middle_img[:, 200:1400, :] # (H, W, C)
-    left_img = left_img[:, :1400, :] # (H, W, C)
-    right_img = right_img[:, 200:, :] # (H, W, C)
-    rgb = np.concatenate((front_left_img, front_img, front_right_img), axis=1)
-    return rgb
-
-
 def image_normalization(path: str, size: Tuple[int, int]):
     image = read_resize_encode_image_pytorch(path, size)
     np_array = image.numpy()
@@ -80,3 +77,45 @@ def image_normalization(path: str, size: Tuple[int, int]):
     np_image = output.numpy().astype(np.uint8)
     image = torch.as_tensor(np_image)
     return image
+
+def mosaic_driver_cameras(image_list, cam_id):
+    if len(image_list) != 6:
+        raise ValueError("6 images are needed")
+    single_w, single_h = image_list[0].size
+    total_w = single_w * 3
+    total_h = single_h * 2
+    mosaic_img = Image.new('RGB', (total_w, total_h), (0, 0, 0))
+    
+    mosaic_img.paste(image_list[0], (0, 0))
+    mosaic_img.paste(image_list[1], (single_w, 0))
+    mosaic_img.paste(image_list[2], (single_w * 2, 0))
+    mosaic_img.paste(image_list[3], (0, single_h))
+    mosaic_img.paste(image_list[4], (single_w, single_h))
+    mosaic_img.paste(image_list[5], (single_w * 2, single_h))
+    
+    return mosaic_img
+
+def mosaic_driver_cameras(image_list, cam_id):
+    if len(image_list) != 6:
+        raise ValueError("6 images are needed")
+    
+    single_w, single_h = image_list[0].size
+    total_w = single_w * 3
+    total_h = single_h * 2
+    mosaic_img = Image.new('RGB', (total_w, total_h), (0, 0, 0))
+    positions = [
+        (0, 0), (single_w, 0), (single_w * 2, 0),
+        (0, single_h), (single_w, single_h), (single_w * 2, single_h)
+    ]
+    
+    for img, pos in zip(image_list, positions):
+        mosaic_img.paste(img, pos)
+    
+    cam_id = CAM_VISUALIZE_MAP.get(cam_id)
+    if 0 <= cam_id < len(positions):
+        draw = ImageDraw.Draw(mosaic_img)
+        x0, y0 = positions[cam_id]
+        x1, y1 = x0 + single_w, y0 + single_h
+        draw.rectangle([x0, y0, x1, y1], outline="red", width=4)
+
+    return mosaic_img

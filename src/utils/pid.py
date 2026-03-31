@@ -1,5 +1,5 @@
-from collections import deque
 import numpy as np
+from collections import deque
 
 class PID(object):
     def __init__(self, k_p=1.0, k_i=0.0, k_d=0.0, n=20):

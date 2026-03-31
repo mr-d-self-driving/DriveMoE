@@ -15,13 +15,12 @@ percentile values for each feature, which can be used for data normalization or 
 Usage:
     python get_statistics.py --data_path /path/to/pkl_files
 """
-
-import numpy as np
-from tqdm import tqdm
+import os
 import json
 import pickle
-import os
 import argparse
+import numpy as np
+from tqdm import tqdm
 
 def calculate(data):
     percentile_99 = np.percentile(data, 99)

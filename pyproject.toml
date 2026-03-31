@@ -12,6 +12,7 @@ dependencies = [
     "joblib",
     "bitsandbytes",
     "einops",
+    "scikit-learn",
     "gsutil>=5.32",
     "hydra-core",
     "imageio",
@@ -29,6 +30,7 @@ dependencies = [
     "transformers",
     "tqdm",
     "wandb",
+    "ray"
 ]
 
 [build-system]

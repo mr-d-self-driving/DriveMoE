@@ -5,12 +5,12 @@ hydra:
     dir: ${log_dir}
 _target_: src.agent.drivepi0.train.DrivePiZeroTrainAgent
 
-log_dir: ${oc.env:LOG_DIR}/train/${name}/${now:%Y-%m-%d}_${now:%H-%M}_${seed}
+log_dir: log/train/${name}/${now:%Y-%m-%d}_${now:%H-%M}_${seed}
 name: drive-pi0
 device: cuda
 n_nodes: 1
 seed: 42
-pretrained_model_path: ${oc.env:VLM_PATH}
+pretrained_model_path: ckpts/paligemma-3b-pt-224
 load_pretrained_weights: True
 resume_checkpoint_path:
 train_vlm: True
@@ -25,19 +25,21 @@ lora_dropout: 0.0
 
 data:
   train:
-    statistics_path: ${oc.env:REPO_DIR}/config/statistics/b2d_statistics.json
-    use_fixed_images: False
-    work_dir: ${oc.env:EXPERIMENT_DIR}/b2d_action
+    statistics_path: config/statistics/b2d_statistics.json
+    work_dir: exp/b2d_action
     split: train
-    num_of_action_experts: 13 # useless in drive-pi0
-    shuffle_buffer_size: 200000
+    return_camera_id: False
+    return_scenario_id: False
+    is_drivemoe: False
+    set_scene_priority: False
   val:
-    statistics_path: ${oc.env:REPO_DIR}/config/statistics/b2d_statistics.json
-    use_fixed_images: False
-    work_dir: ${oc.env:EXPERIMENT_DIR}/b2d_action
+    statistics_path: config/statistics/b2d_statistics.json
+    work_dir: exp/b2d_action
     split: val
-    num_of_action_experts: 13 # useless in drive-pi0
-    shuffle_buffer_size: 200000
+    return_camera_id: False
+    return_scenario_id: False
+    is_drivemoe: False
+    set_scene_priority: False
 
 wandb:
   entity: ${oc.env:WANDB_ENTITY}
@@ -58,9 +60,9 @@ num_workers: 8
 action_lr: 5e-5
 vlm_lr: 5e-5
 action_lr_scheduler:
-  first_cycle_steps: 10000000 # basically no decaying
+  first_cycle_steps: 10000000
   min_lr: 1e-8
-  warmup_steps: 200 # a bit of warmup
+  warmup_steps: 200
 vlm_lr_scheduler:
   first_cycle_steps: 10000000
   min_lr: 1e-8
@@ -71,15 +73,14 @@ max_grad_norm: 1.0
 
 flow_sampling: beta
 num_inference_steps: 10
-final_action_clip_value: 1.0  # data normalized in [-1,1]
+final_action_clip_value: 1.0
 
 cond_steps: 5
 horizon_steps: 10
-action_dim: 2 # EEF_POS
-proprio_dim: 10  # POS_EULER
-state_dim: ${proprio_dim}
+action_dim: 2
+proprio_dim: 10
 max_seq_len: 532  # fixed 512 for image + max 20 for text
-tokenizer_padding: max_length # instead of truncating to longest
+tokenizer_padding: max_length
 max_image_text_tokens: ${max_seq_len}
 
 mixture:
@@ -109,7 +110,6 @@ mixture:
     adaptive_mode: ${action_expert_adaptive_mode}
 time_hidden_size: 256 # only applicable if using adaptive
 
-# Fixed
 image_token_index: 257152
 vocab_size: 257216
 pad_token_id: 0
@@ -117,7 +117,7 @@ pad_token_id: 0
 vision:
   _target_: src.model.paligemma.siglip.SiglipVisionModel
   config:
-    hidden_size: 1152 # siglip
+    hidden_size: 1152
     intermediate_size: 4304
     num_hidden_layers: 27
     num_attention_heads: 16
@@ -126,7 +126,7 @@ vision:
     patch_size: 14
     layer_norm_eps: 1e-6
     attention_dropout: 0.0
-    num_image_tokens: 512 # 2 images: 256 * 2
+    num_image_tokens: 512
     lora:
       r: ${lora_r}
       dropout: ${lora_dropout}

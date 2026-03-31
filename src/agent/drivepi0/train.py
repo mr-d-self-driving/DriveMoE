@@ -1,18 +1,16 @@
-import logging
 import os
-import random
-from collections import deque
-
-import bitsandbytes as bnb
-import einops
-import numpy as np
 import torch
+import wandb
+import einops
+import random
+import logging
+import numpy as np
+import bitsandbytes as bnb
+from collections import deque
 from omegaconf import OmegaConf
-from PIL import Image
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 
-import wandb
 from src.agent.dataset import Bench2DriveDataset
 from src.model.DrivePi0.drivepi0 import DrivePiZero
 from src.model.DrivePi0.processing import VLAProcessor
@@ -54,17 +52,6 @@ class DrivePiZeroTrainAgent:
         self.main_rank = not self.multi_gpu or global_rank == 0
 
         # logging
-        self.use_wandb = cfg.get("wandb", False)
-        if self.use_wandb and self.main_rank:
-            wandb.init(
-                entity=cfg.wandb.entity,
-                project=cfg.wandb.project,
-                name=cfg.wandb.run,
-                mode="offline",
-                config=OmegaConf.to_container(cfg, resolve=True),
-                id=self.wandb_id if hasattr(self, "wandb_id") else None,
-                resume="allow",  # not using resume_from
-            )
         self.save_model_freq = int(cfg.save_model_freq)
         self.log_freq = cfg.log_freq
         self.log_dir = cfg.log_dir
@@ -96,6 +83,19 @@ class DrivePiZeroTrainAgent:
             self.model.freeze_non_lora_weights_in_vlm()
         self.model.to(self.dtype)
         self.model.to(self.device)
+        
+        self.use_wandb = cfg.get("wandb", False)
+        if self.use_wandb and self.main_rank:
+            wandb.init(
+                entity=cfg.wandb.entity,
+                project=cfg.wandb.project,
+                name=cfg.wandb.run,
+                mode="offline",
+                config=OmegaConf.to_container(cfg, resolve=True),
+                id=self.wandb_id if hasattr(self, "wandb_id") else None,
+                resume="allow",  # not using resume_from
+            )
+        
         if cfg.get(
             "use_torch_compile", True
         ):  # model being compiled in the first batch which takes some time
@@ -269,19 +269,14 @@ class DrivePiZeroTrainAgent:
             # the current code fetchs 2 images, if you want to change the number of images, you need to change the config file
             images_front = batch["image_front"]
             images_front_history = batch["image_front_time"]
-            # images_back = batch["image_back"]
-            
-            batch_size = images_front.shape[0]
             
             state = batch["state"]
             trajectory = batch["trajectory"].squeeze(1)  # remove the time dimension
             texts = batch["language_instruction"]
-            images_front = einops.rearrange(images_front, "B H W C -> B C H W")  # remove cond_steps dimension
+            images_front = einops.rearrange(images_front, "B H W C -> B C H W")
             images_front = images_front.unsqueeze(1)
-            images_front_history = einops.rearrange(images_front_history, "B H W C -> B C H W")  # remove cond_steps dimension
+            images_front_history = einops.rearrange(images_front_history, "B H W C -> B C H W")
             images_front_history = images_front_history.unsqueeze(1)
-            # images_back = einops.rearrange(images_back, "B H W C -> B C H W")  # remove cond_steps dimension
-            # images_back = images_back.unsqueeze(1)
             
             images = torch.cat((images_front, images_front_history), dim=1) # cat
             model_inputs = self.processor(text=texts, images=images)
@@ -320,16 +315,6 @@ class DrivePiZeroTrainAgent:
     
         while 1:
             for batch in self.train_dataloader:
-                '''
-                batch: dict with keys 'state', 'image_front', 'image_back', 'trajectory', 'language_instruction'
-                image_front: (torch.Size([bsz, 1, H, W, 3], uint8)
-                image_front_history: (torch.Size([bsz, 1, H, W, 3], uint8)
-                image_back: (torch.Size([bsz, 1, H, W, 3], uint8)
-                state: (torch.Size([bsz, window, state_dim])
-                trajectory:  (torch.Size([bsz, horizon, trajectory_dim], float32)
-                language_instruction: btz, str
-                '''
-
                 inputs = preprocess_batch(batch, split_mask=False, sample_fm_time=True)
                 # make sure only syncing when taking gradient steps
                 if (cnt_batch + 1) % self.grad_accumulation_steps != 0:

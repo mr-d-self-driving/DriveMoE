@@ -5,8 +5,10 @@
 # ===============================================
 
 # Directory Configuration
-WORK_DIR=$EXPERIMENT_DIR      # Directory for processed data cache
-DATASET_PATH=$DATA_DIR        # Directory containing original B2D dataset
+WORK_DIR=exp                            # Directory for processed data cache
+DATASET_PATH=data/Bench2Drive-Base      # Directory containing original B2D dataset
+CAMERA_LABEL_DIR=data/camera_labels     # Directory containing camera labels
+SCENARIO_LABEL_DIR=data/scenario_labels # Directory containing scenario labels
 
 # Temporal Configuration
 WINDOW_SIZE=5                 # Number of historical frames/observations used as input context
@@ -47,8 +49,10 @@ mkdir -p "$WORK_DIR" || {
 # Generate action data
 echo "Step 1: Generating action data..."
 python src/data/generate_data/generate_action.py \
-    --dataset_path "$DATASET_PATH" \
-    --work_dir "$WORK_DIR"
+    --b2d_dataset_dir "$DATASET_PATH" \
+    --camera_label_dir "$CAMERA_LABEL_DIR" \
+    --scenario_label_dir "$SCENARIO_LABEL_DIR" \
+    --work_dir "$WORK_DIR" \
 
 # Create windowed sequences
 echo "Step 2: Creating windowed sequences..."

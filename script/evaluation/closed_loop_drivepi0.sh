@@ -10,6 +10,9 @@ PLANNER_TYPE=traj
 ALGO=drivepi0
 SAVE_PATH=./eval_bench2drive220_${ALGO}_${PLANNER_TYPE}
 
+export PYTHONPATH=$PYTHONPATH:../DriveMoE
+export DRIVEMOE_REPO_DIR=../DriveMoE
+
 if [ ! -d "${ALGO}_b2d_${PLANNER_TYPE}" ]; then
     mkdir ${ALGO}_b2d_${PLANNER_TYPE}
     echo -e "\033[32m Directory ${ALGO}_b2d_${PLANNER_TYPE} created. \033[0m"

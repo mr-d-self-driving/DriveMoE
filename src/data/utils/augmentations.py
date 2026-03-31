@@ -1,6 +1,5 @@
-from typing import Optional
-import torch
 import tensorflow as tf
+from typing import Optional
 
 
 def random_resized_crop(image, scale, ratio, seed):
